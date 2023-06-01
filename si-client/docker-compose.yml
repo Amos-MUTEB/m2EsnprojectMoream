@@ -70,6 +70,8 @@ services:
       - MYSQL_USER=itop
       - MYSQL_PASSWORD=itop
       - MYSQL_ROOT_PASSWORD=root
+    volumes:
+      - ./itop-dbb-data/mariadb:/var/lib/mysql
 
   odoo-db-client:
     container_name: odoo-db-client
@@ -79,7 +81,7 @@ services:
       - POSTGRES_PASSWORD=odoo
       - POSTGRES_DB=postgres
     volumes:
-      - odoo-db_data:/var/lib/postgresql/data
+      - ./odoo-db_data:/var/lib/postgresql/data
 
   wordpress-db-client:
     image: mysql
