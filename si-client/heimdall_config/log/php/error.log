@@ -46,3 +46,11 @@
 [01-Jun-2023 10:36:44] NOTICE: ready to handle connections
 [01-Jun-2023 10:38:00] NOTICE: Terminating ...
 [01-Jun-2023 10:38:00] NOTICE: exiting, bye-bye!
+[01-Jun-2023 10:44:00] NOTICE: fpm is running, pid 234
+[01-Jun-2023 10:44:00] NOTICE: ready to handle connections
+[01-Jun-2023 10:44:56] NOTICE: Terminating ...
+[01-Jun-2023 10:44:56] NOTICE: exiting, bye-bye!
+[01-Jun-2023 13:02:16] NOTICE: fpm is running, pid 233
+[01-Jun-2023 13:02:16] NOTICE: ready to handle connections
+[01-Jun-2023 13:03:09] NOTICE: Terminating ...
+[01-Jun-2023 13:03:09] NOTICE: exiting, bye-bye!

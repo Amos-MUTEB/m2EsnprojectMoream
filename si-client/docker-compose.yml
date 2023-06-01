@@ -1,18 +1,6 @@
 version: "3"
 
 services:
-  itop-client:
-    image: vbkunin/itop
-    container_name: itop-client
-    restart: always
-    ports:
-      - "8888:80"
-    environment:
-      - DB_HOST=itop-db-client
-      - DB_NAME=itop
-      - DB_USER=itop
-      - DB_PASSWORD=itop
-
   odoo-client:
     container_name: odoo-client
     image: odoo:14
@@ -60,18 +48,6 @@ services:
       - MEDIAWIKI_DATABASE_PASSWORD=mediawiki
     depends_on:
       - bootstack-db-client
-
-  itop-db-client:
-    image: mariadb
-    container_name: itop-db-client
-    restart: always
-    environment:
-      - MYSQL_DATABASE=itop
-      - MYSQL_USER=itop
-      - MYSQL_PASSWORD=itop
-      - MYSQL_ROOT_PASSWORD=root
-    volumes:
-      - ./itop-dbb-data/mariadb:/var/lib/mysql
 
   odoo-db-client:
     container_name: odoo-db-client
@@ -127,7 +103,6 @@ services:
       - "9595:80"
 
 volumes:
-  itop-db-data:
   wordpress-db-data:
   bootstack-db-data:
   portainer_data:
