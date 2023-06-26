@@ -1,4 +1,4 @@
-version: "3"
+version: '3'
 
 services:
   odoo-client:
@@ -34,20 +34,22 @@ services:
     depends_on:
       - wordpress-db-client
 
-  bootstack-client:
-    image: bitnami/mediawiki:latest
-    container_name: bootstack-client
-    restart: always
-    ports:
-      - "8081:8080"
-    environment:
-      - APP_URL=http://localhost:8081
-      - MEDIAWIKI_DATABASE_HOST=bootstack-db-client
-      - MEDIAWIKI_DATABASE_NAME=mediawiki
-      - MEDIAWIKI_DATABASE_USER=mediawiki
-      - MEDIAWIKI_DATABASE_PASSWORD=mediawiki
-    depends_on:
-      - bootstack-db-client
+#  bootstack-client:
+#    image: bitnami/mediawiki:latest
+#    container_name: bootstack-client
+#    restart: always
+#    ports:
+#      - "8081:8080"
+#    environment:
+#      - APP_URL=http://localhost:8081
+#      - MEDIAWIKI_DATABASE_HOST=bootstack-db-client
+#      - MEDIAWIKI_DATABASE_NAME=mediawiki
+#      - MEDIAWIKI_DATABASE_USER=mediawiki
+#      - MEDIAWIKI_DATABASE_PASSWORD=mediawiki
+#    depends_on:
+#      - bootstack-db-client
+
+
 
   odoo-db-client:
     container_name: odoo-db-client
@@ -71,17 +73,72 @@ services:
     volumes:
       - ./wordpress-data:/data        
 
-  bootstack-db-client:
-    image: mariadb
-    container_name: bootstack-db-client
+#  bootstack-db-client:
+#    image: mariadb
+#    container_name: bootstack-db-client
+#    restart: always
+#    environment:
+#      - MYSQL_DATABASE=mediawiki
+#      - MYSQL_USER=mediawiki
+#      - MYSQL_PASSWORD=mediawiki
+#      - MYSQL_ROOT_PASSWORD=root
+#    volumes:
+#      - ./bootstack-data:/data
+
+  zabbix-proxy:
+    image: zabbix/zabbix-proxy-sqlite3:latest
+    container_name: zabbix-proxy-client
     restart: always
     environment:
-      - MYSQL_DATABASE=mediawiki
-      - MYSQL_USER=mediawiki
-      - MYSQL_PASSWORD=mediawiki
-      - MYSQL_ROOT_PASSWORD=root
+      - ZBX_SERVER_HOST=89.80.113.38
+      - ZBX_PROXYMODE=0
+      - ZBX_PROXYNAME=zabbix-proxy-client
+      - ZBX_SERVER_PORT=10051
+      - ZBX_STARTPROXY=1
+      - ZBX_HOSTNAME=zabbix-central
+#      - ZBX_HOST_METADATA=<métadonnées de l'hôte>
     volumes:
-      - ./bootstack-data:/data        
+      - /etc/localtime:/etc/localtime:ro 
+#    networks:
+#      - zabbix-proxy-network
+
+  bookstack-client:
+    image: lscr.io/linuxserver/bookstack
+    container_name: bookstack-client
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - APP_URL=http://127.0.0.1:6975
+      - DB_HOST=bookstack_db_client
+      - DB_PORT=3306
+      - DB_USER=bookstack
+      - DB_PASS=bookstack
+      - DB_DATABASE=bookstackapp
+    volumes:
+      - ./bookstack_app_data:/config
+    ports:
+      - 6875:80
+    restart: unless-stopped
+    depends_on:
+      - bookstack_db_client
+  
+
+  bookstack_db_client:
+    image: lscr.io/linuxserver/mariadb
+    container_name: bookstack_db_client
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - MYSQL_ROOT_PASSWORD=bookstack
+      - TZ=Europe/London
+      - MYSQL_DATABASE=bookstackapp
+      - MYSQL_USER=bookstack
+      - MYSQL_PASSWORD=bookstack
+    volumes:
+      - ./bookstack_db_data:/config
+    restart: unless-stopped
+
+        
 
   portainer-client:
     image: portainer/portainer-ce
@@ -103,9 +160,5 @@ services:
       - "9595:80"
 
 volumes:
-  wordpress-db-data:
-  bootstack-db-data:
-  portainer_data:
-  odoo-db_data:
-  odoo_data:
   odoo_addons:
+  odoo_data:

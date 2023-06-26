@@ -1,6 +1,30 @@
 version: "3"
 
 services:
+  itop-client:
+    image: vbkunin/itop
+    container_name: itop-central
+    restart: always
+    ports:
+      - "9898:80"
+    environment:
+      - DB_HOST=itop-db-central
+      - DB_NAME=itop
+      - DB_USER=itop
+      - DB_PASSWORD=itop
+      
+  itop-db-central:
+    image: mariadb:10
+    container_name: itop-db-central
+    restart: always
+    environment:
+      - MYSQL_DATABASE=itop
+      - MYSQL_USER=itop
+      - MYSQL_PASSWORD=itop
+      - MYSQL_ROOT_PASSWORD=root
+    volumes:
+      - ./itop-db-data/mariadb:/var/lib/mysql
+
   portainer-central:
     image: portainer/portainer-ce
     container_name: portainer-central
@@ -11,44 +35,9 @@ services:
     ports:
       - "9000:9000"
 
-#  zabbix-db-central:
-#    container_name: zabbix-db-central
-#    image: postgres:latest
-#    restart: always
-#    ports:
-#      - "5432:5432"
-#    environment:
-#      POSTGRES_PASSWORD: zabbix
-#      POSTGRES_DB: zabbix
-#      TZ: Europe/Paris
-#    volumes:
-#      - ./zabbix-db-data:/var/lib/postgresql/data
-
-
-#  zabbix-web-central:
-#    container_name: zabbix-central
-#    image: zabbix/zabbix-web-nginx-pgsql:latest
-#    depends_on:
-#      - zabbix-db-central
-#    ports:
-#      - "8095:8080"
-#    environment:
-#      DB_SERVER_HOST: zabbix-db-central
-#      POSTGRES_USER: postgres
-#      POSTGRES_PASSWORD: zabbix
-#      POSTGRES_DB: zabbix
-#      ZBX_SERVER_HOST: zabbix
-#    restart: always
-
-#  ocsinventory-central:
-#    image: ocsinventory/ocsinventory-docker-image
-#    container_name: ocsinventory-central
-#    restart: always
-#    ports:
-#      - "8181:80"
 
   zabbix-db-central:
-    image: postgres
+    image: postgres:14
     container_name: zabbix-db-central
     restart: always
     environment:
@@ -64,7 +53,7 @@ services:
     depends_on:
       - zabbix-db-central
     ports:
-      - 10051:10051
+      - 10051:10051 
       - 10050:10050
     environment:
       DB_SERVER_HOST: zabbix-db-central
@@ -92,44 +81,90 @@ services:
       ZBX_SERVER_HOST: zabbix
     restart: always
 
-
-  ocs-central:
-    image : ocsinventory/ocsinventory-docker-image:latest
-    container_name : ocs-central
-    environment :
-      OCS_DB_SERVER : ocs-db-central
-      OCS_DB_PORT : "3306"
-      OCS_DB_NAME : ocsweb
-#      OCS_DBSERVER_READ : ocsinventory-db-central
-#      OCS_DBSERVER_WRITE : ocsinventory-db-central
-      OCS_DB_USER : ocs
-      OCS_DB_PASS : ocs
-    volumes :
-      - ocsdownload:/usr/share/ocsinventory-reports/ocsreports/download/
-      - ocssrv:/etc/ocsinventory-reports/
-      - ocslib:/var/lib/ocsinventory-reports/
-    links :
-      - ocs-db-central
-#    depends_on:
-#      - ocs-db-central
-    ports :
-      - 8040:80
+#  prometheus:
+#    image: prom/prometheus
+#    ports:
+#      - 9091:9090
+#    volumes:
+#      - ./prometheus/:/etc/prometheus/
+#      - prometheus_data:/prometheus
+#    command:
+#      - '--config.file=/etc/prometheus/prometheus.yml'
+#
+#  grafana:
+#    image: grafana/grafana-enterprise
+#    ports:
+#      - 3000:3000
+#    restart: unless-stopped
+#    command: 
+#      - 'sudo mkdir /var/lib/grafana/plugins'
+#    volumes:
+#      - ./grafana:/var/lib/grafana
 
 
-  ocs-db-central :
-    image : mysql:5.7
-    container_name : ocs-db-central
-    restart: always
+  odoo-central:
+    container_name: odoo-central
+    image: odoo:14
+    depends_on:
+      - odoo-db-central
+    ports:
+      - "8069:8069"
     environment:
-      MYSQL_ROOT_PASSWORD : mdp
-      MYSQL_USER : ocs
-      MYSQL_PASSWORD : ocs
-      MYSQL_DATABASE : ocsweb
-    volumes :
-      - ./ocs-sql/:/docker-entrypoint-initdb.d/
-      - ocsdata:/var/lib/mysql
-    ports :
-      - 3306:3306
+      - HOST=odoo-db-central
+      - USER=odoo
+      - PASSWORD=odoo
+      - DB_NAME=postgres
+      - PGUSER=odoo
+      - PGPASSWORD=odoo
+      - PGHOST=odoo-db-central
+    volumes:
+      - odoo_data:/var/lib/odoo
+      - odoo_addons:/mnt/extra-addons
+
+  odoo-db-central:
+    container_name: odoo-db-central
+    image: postgres:12
+    environment:
+      - POSTGRES_USER=odoo
+      - POSTGRES_PASSWORD=odoo
+      - POSTGRES_DB=postgres
+    volumes:
+      - ./odoo-db_data:/var/lib/postgresql/data
+
+
+  passbolt-db-central:
+    container_name: passbolt-db-central 
+    image: mariadb:10.10
+    restart: unless-stopped
+    environment:
+      MYSQL_RANDOM_ROOT_PASSWORD: passbolt
+      MYSQL_DATABASE: passbolt
+      MYSQL_USER: passbolt
+      MYSQL_PASSWORD: passbolt
+    volumes:
+      - ./passbolt:/var/lib/mysql
+
+  passbolt:
+    container_name: passbolt-central
+    image: passbolt/passbolt:latest-ce
+    #Alternatively you can use rootless:
+    #image: passbolt/passbolt:latest-ce-non-root
+    restart: unless-stopped
+    depends_on:
+      - passbolt-db-central
+    environment:
+      APP_FULL_BASE_URL: http://127.0.0.1:10480
+      DATASOURCES_DEFAULT_HOST: passbolt-db-central
+      DATASOURCES_DEFAULT_USERNAME: passbolt
+      DATASOURCES_DEFAULT_PASSWORD: passbolt
+      DATASOURCES_DEFAULT_DATABASE: passbolt
+    volumes:
+      - ./passbolt-gpg:/etc/passbolt/gpg
+      - ./passbolt-jwt:/etc/passbolt/jwt
+    command: ["/usr/bin/wait-for.sh", "-t", "0", "db:3306", "--", "/docker-entrypoint.sh"]
+    ports:
+      - 10480:80
+      - 10443:443
 
   heimdall-central:
     image: linuxserver/heimdall
@@ -141,10 +176,5 @@ services:
       - "9090:80"
 
 volumes:
-  portainer_data:
-  zabbix-agent-central:
-  heimdall_config:
-  ocsdata:
-  ocsdownload:
-  ocssrv:
-  ocslib:
+  odoo_addons:
+  odoo_data:
